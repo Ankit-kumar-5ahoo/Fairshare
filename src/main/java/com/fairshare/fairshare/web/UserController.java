@@ -1,6 +1,6 @@
 package com.fairshare.fairshare.web;
 
-import com.fairshare.fairshare.domain.User;
+import com.fairshare.fairshare.Model.User;
 import com.fairshare.fairshare.repo.UserRepository;
 import com.fairshare.fairshare.web.dto.CreateUserRequest;
 import jakarta.validation.Valid;

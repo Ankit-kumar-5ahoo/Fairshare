@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: fairshare-backend
+    env: java
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/fairshare-0.0.1-SNAPSHOT.jar
+    plan: free
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:postgresql://db.bswouwhltcxcusnueghd.supabase.co:5432/postgres?sslmode=require
+      - key: SPRING_DATASOURCE_USERNAME
+        value: postgres
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: passankit10@
+      - key: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+        value: org.postgresql.Driver
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: SPRING_JPA_SHOW_SQL
+        value: true
+      - key: SERVER_PORT
+        value: 8080
