@@ -1,20 +1,28 @@
 package com.fairshare.fairshare.Model;
 
 import jakarta.persistence.*;
+import lombok.*;
+import java.util.List;
 
 @Entity
 @Table(name = "groups")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Group {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
     private String name;
 
-    public Group() {}
-    public Group(String name) { this.name = name; }
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GroupMember> members;
 
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public Group(String name) {
+        this.name = name; //:todo changed by ankit-k-s
+    }
 }
