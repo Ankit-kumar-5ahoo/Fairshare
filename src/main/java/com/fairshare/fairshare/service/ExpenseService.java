@@ -2,48 +2,49 @@ package com.fairshare.fairshare.service;
 
 import com.fairshare.fairshare.Model.Expense;
 import com.fairshare.fairshare.Model.Group;
+import com.fairshare.fairshare.Model.User;
 import com.fairshare.fairshare.repo.ExpenseRepository;
+import com.fairshare.fairshare.repo.GroupRepository;
+import com.fairshare.fairshare.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
-
-    public List<Expense> getAllExpenses() {
-        return expenseRepository.findAll();
-    }
-
-    public Optional<Expense> getExpenseById(Long id) {
-        return expenseRepository.findById(id);
-    }
+    private final GroupRepository groupRepository;
+    private final UserRepository userRepository;
+    private final BalanceService balanceService;
 
     public Expense createExpense(Expense expense) {
-        return expenseRepository.save(expense);
+        Group group = groupRepository.findById(expense.getGroup().getId())
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+        User payer = userRepository.findById(expense.getPaidBy().getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        expense.setGroup(group);
+        expense.setPaidBy(payer);
+
+        Expense saved = expenseRepository.save(expense);
+
+        balanceService.updateBalancesAfterExpense(group, payer, expense.getAmount());
+        return saved;
     }
 
-    public Expense updateExpense(Long id, Expense newExpense) {
-        return expenseRepository.findById(id)
-                .map(expense -> {
-                    expense.setDescription(newExpense.getDescription());
-                    expense.setAmount(newExpense.getAmount());
-                    expense.setPaidBy(newExpense.getPaidBy());
-                    expense.setGroup(newExpense.getGroup());
-                    return expenseRepository.save(expense);
-                })
-                .orElseThrow(() -> new RuntimeException("Expense not found"));
+    public List<Expense> getExpensesByGroup(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+        return expenseRepository.findByGroup(group);
     }
 
     public void deleteExpense(Long id) {
+        if (!expenseRepository.existsById(id)) {
+            throw new RuntimeException("Expense not found");
+        }
         expenseRepository.deleteById(id);
-    }
-
-    public List<Expense> getExpensesByGroup(Group group) {
-        return expenseRepository.findByGroup(group);
     }
 }

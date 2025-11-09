@@ -1,26 +1,31 @@
 package com.fairshare.fairshare.Model;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "group_members",
         uniqueConstraints = @UniqueConstraint(columnNames = {"group_id", "user_id"}))
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class GroupMember {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false) @JoinColumn(name = "group_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "group_id")
     private Group group;
 
-    @ManyToOne(optional = false) @JoinColumn(name = "user_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
-    public GroupMember() {}
-    public GroupMember(Group group, User user) { this.group = group; this.user = user; }
-
-    public Long getId() { return id; }
-    public Group getGroup() { return group; }
-    public void setGroup(Group group) { this.group = group; }
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public GroupMember(Group group, User user) {
+        this.group = group;
+        this.user = user;
+    } //:todo changed by ankit-k-s
 }

@@ -1,6 +1,7 @@
 package com.fairshare.fairshare.web;
 
 import com.fairshare.fairshare.Model.Expense;
+import com.fairshare.fairshare.repo.ExpenseRepository;
 import com.fairshare.fairshare.service.ExpenseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,32 +16,27 @@ import java.util.List;
 public class ExpenseController {
 
     private final ExpenseService expenseService;
-
-    @GetMapping
-    public ResponseEntity<List<Expense>> getAllExpenses() {
-        return ResponseEntity.ok(expenseService.getAllExpenses());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Expense> getExpenseById(@PathVariable Long id) {
-        return expenseService.getExpenseById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+    private final ExpenseRepository expenseRepository;
 
     @PostMapping
     public ResponseEntity<Expense> createExpense(@RequestBody Expense expense) {
-        return ResponseEntity.ok(expenseService.createExpense(expense));
+        Expense saved = expenseService.createExpense(expense);
+        return ResponseEntity.ok(saved);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Expense> updateExpense(@PathVariable Long id, @RequestBody Expense expense) {
-        return ResponseEntity.ok(expenseService.updateExpense(id, expense));
+    @GetMapping
+    public List<Expense> getAllExpenses() {
+        return expenseRepository.findAll();
+    }
+
+    @GetMapping("/group/{groupId}")
+    public List<Expense> getExpensesByGroup(@PathVariable Long groupId) {
+        return expenseService.getExpensesByGroup(groupId);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
+    public ResponseEntity<String> deleteExpense(@PathVariable Long id) {
         expenseService.deleteExpense(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("Expense deleted successfully");
     }
 }
