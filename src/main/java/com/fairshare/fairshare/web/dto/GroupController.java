@@ -65,14 +65,14 @@ public class GroupController {
                 userRepo.save(user);
             }
 
-            // 3️⃣ Add user to the group
+
             if (!gmRepo.existsByGroupIdAndUserId(group.getId(), user.getId()))
             {
                 gmRepo.save(new GroupMember(group, user));
             }
         }
 
-        // 4️⃣ Return a simple response
+
         String message = "Group '" + group.getName() + "' created with members: " + request.getMemberEmails();
         return ResponseEntity.ok(message);
     }
