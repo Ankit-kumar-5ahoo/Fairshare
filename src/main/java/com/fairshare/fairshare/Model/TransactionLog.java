@@ -3,31 +3,33 @@ package com.fairshare.fairshare.Model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "balances")
+@Table(name = "transaction_logs")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Balance {
+public class TransactionLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "from_user_id")
-    private User fromUser;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "to_user_id")
-    private User toUser;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "group_id")
     private Group group;
 
+    @ManyToOne(optional = false)
+    private User actor;
+
     @Column(nullable = false)
-    private double amount;
+    private String action;
+
+    @Column(nullable = false, length = 1000)
+    private String details;
+
+    @Column(nullable = false)
+    private LocalDateTime timestamp = LocalDateTime.now();
 }

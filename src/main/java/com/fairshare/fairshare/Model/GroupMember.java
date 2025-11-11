@@ -6,7 +6,8 @@ import lombok.*;
 @Entity
 @Table(name = "group_members",
         uniqueConstraints = @UniqueConstraint(columnNames = {"group_id", "user_id"}))
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -27,5 +28,5 @@ public class GroupMember {
     public GroupMember(Group group, User user) {
         this.group = group;
         this.user = user;
-    } //:todo changed by ankit-k-s
+    }
 }

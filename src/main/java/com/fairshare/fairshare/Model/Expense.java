@@ -4,11 +4,14 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Data
+@Table(name = "expenses")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Expense {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -17,13 +20,13 @@ public class Expense {
     private String description;
 
     @Column(nullable = false)
-    private Double amount;
+    private double amount;
 
-    @ManyToOne
-    @JoinColumn(name = "paid_by_id", nullable = false)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "paid_by")
     private User paidBy;
 
-    @ManyToOne
-    @JoinColumn(name = "group_id", nullable = false)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "group_id")
     private Group group;
 }

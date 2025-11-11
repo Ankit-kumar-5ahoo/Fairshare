@@ -1,4 +1,4 @@
-package com.fairshare.fairshare.web.dto;
+package com.fairshare.fairshare.web;
 
 import com.fairshare.fairshare.Model.Group;
 import com.fairshare.fairshare.Model.GroupMember;
@@ -6,6 +6,8 @@ import com.fairshare.fairshare.Model.User;
 import com.fairshare.fairshare.repo.GroupMemberRepository;
 import com.fairshare.fairshare.repo.GroupRepository;
 import com.fairshare.fairshare.repo.UserRepository;
+import com.fairshare.fairshare.web.dto.CreateGroupByEmailRequest;
+import com.fairshare.fairshare.web.dto.CreateGroupRequest;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -59,20 +61,17 @@ public class GroupController {
             User user = userRepo.findByEmail(email).orElse(null);
 
             if (user == null) {
-                // Create a user with default name (before '@')
                 String defaultName = email.split("@")[0];
                 user = new User(defaultName, email);
                 userRepo.save(user);
             }
 
-            // 3️⃣ Add user to the group
             if (!gmRepo.existsByGroupIdAndUserId(group.getId(), user.getId()))
             {
                 gmRepo.save(new GroupMember(group, user));
             }
         }
 
-        // 4️⃣ Return a simple response
         String message = "Group '" + group.getName() + "' created with members: " + request.getMemberEmails();
         return ResponseEntity.ok(message);
     }
