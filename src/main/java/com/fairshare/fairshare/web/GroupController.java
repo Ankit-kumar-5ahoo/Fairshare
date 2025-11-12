@@ -86,7 +86,6 @@ public class GroupController {
 
         return groupService.findByInviteCode(inviteCode)
                 .map(group -> {
-                    // Check if already a member
                     boolean alreadyMember = group.getMembers().stream()
                             .anyMatch(m -> m.getUser().getId().equals(user.getId()));
 
@@ -94,7 +93,6 @@ public class GroupController {
                         return ResponseEntity.badRequest().body("User already in the group.");
                     }
 
-                    // Add as member
                     group.getMembers().add(new com.fairshare.fairshare.Model.GroupMember(null, group, user));
                     return ResponseEntity.ok("Joined group: " + group.getName());
                 })
