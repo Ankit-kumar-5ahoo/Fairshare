@@ -6,6 +6,7 @@ import com.fairshare.fairshare.Model.GroupMember;
 import com.fairshare.fairshare.Model.User;
 import com.fairshare.fairshare.repo.BalanceRepository;
 import com.fairshare.fairshare.repo.GroupMemberRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ public class BalanceService {
     private final BalanceRepository balanceRepository;
     private final GroupMemberRepository groupMemberRepository;
 
+    @Transactional
     public void updateBalancesAfterExpense(Group group, User payer, double totalAmount) {
         List<GroupMember> members = groupMemberRepository.findByGroup(group);
         int totalMembers = members.size();
@@ -28,13 +30,29 @@ public class BalanceService {
 
             if (current.getId().equals(payer.getId())) continue;
 
-            Optional<Balance> existingBalanceOpt =
-                    balanceRepository.findByGroupAndFromUserAndToUser(group, current, payer);
+            Optional<Balance> direct = balanceRepository.findByGroupAndFromUserAndToUser(group, current, payer);
+            Optional<Balance> reverse = balanceRepository.findByGroupAndFromUserAndToUser(group, payer, current);
 
-            if (existingBalanceOpt.isPresent()) {
-                Balance existing = existingBalanceOpt.get();
+            if (direct.isPresent()) {
+                Balance existing = direct.get();
                 existing.setAmount(existing.getAmount() + share);
                 balanceRepository.save(existing);
+
+            } else if (reverse.isPresent()) {
+                Balance existing = reverse.get();
+                existing.setAmount(existing.getAmount() - share);
+
+                if (existing.getAmount() > 0) {
+                    balanceRepository.save(existing);
+                } else if (existing.getAmount() < 0) {
+                    existing.setFromUser(current);
+                    existing.setToUser(payer);
+                    existing.setAmount(-existing.getAmount());
+                    balanceRepository.save(existing);
+                } else {
+                    balanceRepository.delete(existing);
+                }
+
             } else {
                 Balance newBalance = Balance.builder()
                         .group(group)
@@ -46,6 +64,7 @@ public class BalanceService {
             }
         }
     }
+
 
     public List<String> simplifyDebts(Group group) {
         List<Balance> balances = balanceRepository.findByGroup(group);

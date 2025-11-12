@@ -1,9 +1,6 @@
 package com.fairshare.fairshare.service;
 
-import com.fairshare.fairshare.Model.Expense;
-import com.fairshare.fairshare.Model.Group;
-import com.fairshare.fairshare.Model.TransactionLog;
-import com.fairshare.fairshare.Model.User;
+import com.fairshare.fairshare.Model.*;
 import com.fairshare.fairshare.exception.ExpenseNotFoundException;
 import com.fairshare.fairshare.exception.GroupNotFoundException;
 import com.fairshare.fairshare.exception.UserNotFoundException;
@@ -13,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -22,17 +20,27 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
+    private final GroupMemberRepository groupMemberRepository;
     private final BalanceService balanceService;
     private final TransactionLogRepository logRepository;
 
     @Transactional
     public Expense addExpense(CreateExpenseRequest req) {
+        if (req.getAmount() == null || req.getAmount() <= 0) {
+            throw new IllegalArgumentException("Expense amount must be greater than 0");
+        }
 
         Group group = groupRepository.findById(req.getGroupId())
                 .orElseThrow(() -> new GroupNotFoundException("Group not found"));
 
         User payer = userRepository.findById(req.getPaidBy())
                 .orElseThrow(() -> new UserNotFoundException("Payer not found"));
+
+        boolean isMember = groupMemberRepository.findByGroup(group).stream()
+                .anyMatch(gm -> gm.getUser().getId().equals(payer.getId()));
+        if (!isMember) {
+            throw new IllegalStateException("Payer is not a member of this group");
+        }
 
         Expense expense = Expense.builder()
                 .description(req.getDescription())
@@ -60,12 +68,11 @@ public class ExpenseService {
         Expense existing = expenseRepository.findById(id)
                 .orElseThrow(() -> new ExpenseNotFoundException("Expense not found"));
 
-        balanceService.updateBalancesAfterExpense(
-                existing.getGroup(),
-                existing.getPaidBy(),
-                -existing.getAmount()
-        );
+        if (updated.getAmount() == null || updated.getAmount() <= 0) {
+            throw new IllegalArgumentException("Expense amount must be greater than 0");
+        }
 
+        balanceService.updateBalancesAfterExpense(existing.getGroup(), existing.getPaidBy(), -existing.getAmount());
         existing.setDescription(updated.getDescription());
         existing.setAmount(updated.getAmount());
 
@@ -74,19 +81,16 @@ public class ExpenseService {
         existing.setPaidBy(newPayer);
 
         Expense saved = expenseRepository.save(existing);
-
         balanceService.updateBalancesAfterExpense(saved.getGroup(), newPayer, saved.getAmount());
-
         logRepository.save(TransactionLog.builder()
                 .group(saved.getGroup())
                 .actor(newPayer)
                 .action("UPDATE_EXPENSE")
-                .details("Updated expense to " + saved.getDescription() + " " + saved.getAmount())
+                .details("Updated expense: " + saved.getDescription() + " ₹" + saved.getAmount())
                 .build());
 
         return saved;
     }
-
     @Transactional
     public void deleteExpense(Long id) {
         Expense existing = expenseRepository.findById(id)
@@ -99,7 +103,7 @@ public class ExpenseService {
                 .group(existing.getGroup())
                 .actor(existing.getPaidBy())
                 .action("DELETE_EXPENSE")
-                .details("Deleted expense: " + existing.getDescription() + " ₹" + existing.getAmount())
+                .details("Deleted expense: " + existing.getDescription() + " " + existing.getAmount())
                 .build());
     }
 

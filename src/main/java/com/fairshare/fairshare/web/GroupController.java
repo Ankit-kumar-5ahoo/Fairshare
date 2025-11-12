@@ -6,74 +6,75 @@ import com.fairshare.fairshare.Model.User;
 import com.fairshare.fairshare.repo.GroupMemberRepository;
 import com.fairshare.fairshare.repo.GroupRepository;
 import com.fairshare.fairshare.repo.UserRepository;
-import com.fairshare.fairshare.web.dto.CreateGroupByEmailRequest;
-import com.fairshare.fairshare.web.dto.CreateGroupRequest;
-import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
+import com.fairshare.fairshare.service.GroupService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/groups")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class GroupController {
-    private final GroupRepository groupRepo;
-    private final UserRepository userRepo;
+
+    private final GroupService groupService;
+    private final UserRepository userRepository;
+    private final GroupRepository groupRepository;
     private final GroupMemberRepository gmRepo;
 
-    public GroupController(GroupRepository groupRepo, UserRepository userRepo, GroupMemberRepository gmRepo) {
-        this.groupRepo = groupRepo;
-        this.userRepo = userRepo;
-        this.gmRepo = gmRepo;
-    }
-
-    @PostMapping
-    @Transactional
-    public ResponseEntity<Group> create(@RequestBody @Valid CreateGroupRequest req)
-    {
-        Group g = groupRepo.save(new Group(req.getName()));
-        for (Long uid : req.getMemberUserIds())
-        {
-            User u = userRepo.findById(uid).orElseThrow();
-            gmRepo.save(new GroupMember(g, u));
-        }
-        return ResponseEntity.created(URI.create("/api/groups/" + g.getId())).body(g);
-    }
-
-    @GetMapping("/{id}/members")
-    public List<GroupMember> members(@PathVariable Long id)
-    {
-        return gmRepo.findByGroupId(id);
-    }
     @PostMapping("/create-by-email")
-    @Transactional
-    public ResponseEntity<String> createGroupByEmail(@RequestBody CreateGroupByEmailRequest request) {
+    public ResponseEntity<Map<String, Object>> createGroupByEmail(
+            @RequestBody Map<String, Object> payload,
+            @AuthenticationPrincipal UserDetails principal) {
 
+        String name = (String) payload.get("name");
+        List<String> memberEmails = (List<String>) payload.get("memberEmails");
 
-        Group group = new Group(request.getName());
-        groupRepo.save(group);
+        User creator = userRepository.findByEmail(principal.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
+        Group saved = groupService.createGroupByEmail(name, memberEmails, creator);
 
-        for (String email : request.getMemberEmails()) {
-
-            User user = userRepo.findByEmail(email).orElse(null);
-
-            if (user == null) {
-                String defaultName = email.split("@")[0];
-                user = new User(defaultName, email);
-                userRepo.save(user);
-            }
-
-            if (!gmRepo.existsByGroupIdAndUserId(group.getId(), user.getId()))
-            {
-                gmRepo.save(new GroupMember(group, user));
-            }
-        }
-
-        String message = "Group '" + group.getName() + "' created with members: " + request.getMemberEmails();
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Map.of(
+                "message", "Group '" + saved.getName() + "' created successfully",
+                "groupId", saved.getId()
+        ));
     }
 
+    @GetMapping("/{groupId}/members")
+    public ResponseEntity<List<GroupMember>> getMembers(@PathVariable Long groupId) {
+        List<GroupMember> members = groupService.getGroupMembers(groupId);
+        return ResponseEntity.ok(members);
+    }
+
+    @PutMapping("/{groupId}/rename")
+    public ResponseEntity<Map<String, String>> renameGroup(
+            @PathVariable Long groupId,
+            @RequestBody Map<String, String> payload,
+            @AuthenticationPrincipal UserDetails principal) {
+
+        String newName = payload.get("name");
+        User actor = userRepository.findByEmail(principal.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Group updated = groupService.renameGroup(groupId, newName, actor);
+        return ResponseEntity.ok(Map.of("message", "Group renamed to " + updated.getName()));
+    }
+
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<Map<String, String>> deleteGroup(
+            @PathVariable Long groupId,
+            @AuthenticationPrincipal UserDetails principal) {
+
+        User actor = userRepository.findByEmail(principal.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        groupService.deleteGroup(groupId, actor);
+        return ResponseEntity.ok(Map.of("message", "Group deleted successfully"));
+    }
 }
