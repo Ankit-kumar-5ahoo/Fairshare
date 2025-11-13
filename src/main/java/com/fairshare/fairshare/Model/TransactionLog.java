@@ -32,4 +32,10 @@ public class TransactionLog {
 
     @Column(nullable = false)
     private LocalDateTime timestamp = LocalDateTime.now();
+    @PrePersist
+    protected void onCreate() {
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now();
+        }
+    }
 }
