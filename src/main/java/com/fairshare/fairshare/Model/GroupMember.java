@@ -1,5 +1,6 @@
 package com.fairshare.fairshare.Model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,6 +20,7 @@ public class GroupMember {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "group_id")
+    @JsonBackReference
     private Group group;
 
     @ManyToOne(optional = false)
