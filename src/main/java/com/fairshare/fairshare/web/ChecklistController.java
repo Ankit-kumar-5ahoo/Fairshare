@@ -4,6 +4,7 @@ import com.fairshare.fairshare.Model.ChecklistItem;
 import com.fairshare.fairshare.Model.User;
 import com.fairshare.fairshare.repo.UserRepository;
 import com.fairshare.fairshare.service.ChecklistService;
+import com.fairshare.fairshare.web.dto.ChecklistItemRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,14 +34,27 @@ public class ChecklistController {
 
     @PostMapping
     public ResponseEntity<ChecklistItem> addItem(
-            @RequestParam String description,
+            @RequestBody ChecklistItemRequest req,
             @AuthenticationPrincipal UserDetails principal) {
 
         User user = userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        ChecklistItem saved = checklistService.addItem(user, description);
+        ChecklistItem saved = checklistService.addItem(user, req.getDescription());
         return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ChecklistItem> updateItem(
+            @PathVariable Long id,
+            @RequestBody ChecklistItemRequest req,
+            @AuthenticationPrincipal UserDetails principal) {
+
+        User user = userRepository.findByEmail(principal.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        ChecklistItem updated = checklistService.updateItem(id, req.getDescription(), user);
+        return ResponseEntity.ok(updated);
     }
 
     @PutMapping("/{id}/toggle")
@@ -52,19 +66,6 @@ public class ChecklistController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         ChecklistItem updated = checklistService.toggleCompleted(id, user);
-        return ResponseEntity.ok(updated);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<ChecklistItem> updateItem(
-            @PathVariable Long id,
-            @RequestParam String description,
-            @AuthenticationPrincipal UserDetails principal) {
-
-        User user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        ChecklistItem updated = checklistService.updateItem(id, description, user);
         return ResponseEntity.ok(updated);
     }
 
