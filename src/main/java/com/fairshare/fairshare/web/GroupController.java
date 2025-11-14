@@ -5,6 +5,7 @@ import com.fairshare.fairshare.Model.GroupMember;
 import com.fairshare.fairshare.Model.User;
 import com.fairshare.fairshare.repo.UserRepository;
 import com.fairshare.fairshare.service.GroupService;
+import com.fairshare.fairshare.web.dto.CreateGroupRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,15 +26,20 @@ public class GroupController {
 
     @PostMapping("/create")
     public ResponseEntity<Group> createGroup(
-            @RequestParam String name,
-            @RequestBody List<String> memberEmails,
+            @RequestBody CreateGroupRequest req,
             @AuthenticationPrincipal UserDetails principal) {
 
         User creator = userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Group created = groupService.createGroupByEmail(name, memberEmails, creator);
-        return ResponseEntity.created(URI.create("/api/groups/" + created.getId())).body(created);
+        Group created = groupService.createGroupByEmail(
+                req.getName(),
+                req.getMemberEmails(),
+                creator
+        );
+
+        return ResponseEntity.created(URI.create("/api/groups/" + created.getId()))
+                .body(created);
     }
 
     @GetMapping("/{groupId}/members")
