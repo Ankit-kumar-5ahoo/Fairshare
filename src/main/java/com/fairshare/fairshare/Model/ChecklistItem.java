@@ -3,6 +3,7 @@ package com.fairshare.fairshare.Model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "checklist_items")
@@ -29,5 +30,6 @@ public class ChecklistItem {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User user;
 }

@@ -2,13 +2,13 @@ package com.fairshare.fairshare.Model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transaction_logs")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -18,24 +18,19 @@ public class TransactionLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    private Group group;
-
-    @ManyToOne(optional = false)
-    private User actor;
-
-    @Column(nullable = false)
     private String action;
 
-    @Column(nullable = false, length = 1000)
+    @Column(length = 1000)
     private String details;
 
-    @Column(nullable = false)
     private LocalDateTime timestamp = LocalDateTime.now();
-    @PrePersist
-    protected void onCreate() {
-        if (timestamp == null) {
-            timestamp = LocalDateTime.now();
-        }
-    }
+
+    @ManyToOne
+    @JoinColumn(name = "actor_id")
+    private User actor;
+
+    @ManyToOne
+    @JoinColumn(name = "group_id")
+    @JsonIgnore
+    private Group group;
 }

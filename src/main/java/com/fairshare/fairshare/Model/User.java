@@ -2,15 +2,16 @@ package com.fairshare.fairshare.Model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.List;
 
 @Entity
 @Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class User {
 
     @Id
@@ -23,17 +24,22 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
     @Column(nullable = false)
     private String role = "ROLE_USER";
 
-    public User(String name, String email) {
-        this.name = name;
-        this.email = email;
-        this.password = "default";
-        this.role = "ROLE_USER";
-    }
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<GroupMember> memberships;
 
+    @OneToMany(mappedBy = "paidBy")
+    @JsonIgnore
+    private List<Expense> expenses;
+
+    @OneToMany(mappedBy = "actor")
+    @JsonIgnore
+    private List<TransactionLog> logs;
 }
