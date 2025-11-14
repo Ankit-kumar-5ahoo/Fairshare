@@ -1,5 +1,12 @@
 package com.fairshare.fairshare.security;
 
+// --- 1. ADD THESE IMPORTS ---
+import java.util.Arrays;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+// --- END OF NEW IMPORTS ---
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +31,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> {})   // enable global CORS
+                // --- 2. MODIFY THIS LINE ---
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // --- END OF MODIFICATION ---
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -35,4 +44,30 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+    // --- 3. ADD THIS ENTIRE NEW BEAN ---
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // This is your frontend's address
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); 
+        
+        // These are the HTTP methods you want to allow
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); 
+        
+        // These are the headers you want to allow
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type")); 
+        
+        // This allows credentials (like cookies, if you use them)
+        configuration.setAllowCredentials(true); 
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        
+        // Apply this configuration to all your API routes
+        source.registerCorsConfiguration("/api/**", configuration); 
+        
+        return source;
+    }
+    // --- END OF NEW BEAN ---
 }
