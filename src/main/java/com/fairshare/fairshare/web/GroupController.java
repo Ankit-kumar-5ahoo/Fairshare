@@ -6,6 +6,7 @@ import com.fairshare.fairshare.Model.User;
 import com.fairshare.fairshare.repo.UserRepository;
 import com.fairshare.fairshare.service.GroupService;
 import com.fairshare.fairshare.web.dto.CreateGroupRequest;
+import com.fairshare.fairshare.web.dto.RenameGroupRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -51,13 +52,13 @@ public class GroupController {
     @PutMapping("/{groupId}/rename")
     public ResponseEntity<Group> renameGroup(
             @PathVariable Long groupId,
-            @RequestParam String newName,
+            @RequestBody RenameGroupRequest req,
             @AuthenticationPrincipal UserDetails principal) {
 
         User actor = userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Group updated = groupService.renameGroup(groupId, newName, actor);
+        Group updated = groupService.renameGroup(groupId, req.getNewName(), actor);
         return ResponseEntity.ok(updated);
     }
 
