@@ -1,11 +1,11 @@
 package com.fairshare.fairshare.security;
 
-// --- 1. ADD THESE IMPORTS ---
+// --- 1. IMPORTS ---
 import java.util.Arrays;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-// --- END OF NEW IMPORTS ---
+import org.springframework.http.HttpMethod; // <-- IMPORT THIS FOR OPTIONS
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -31,12 +31,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // --- 2. MODIFY THIS LINE ---
+                // --- 2. CONFIGURE CORS ---
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // --- END OF MODIFICATION ---
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        
+                        // --- 3. ADD THIS LINE FOR OPTIONS REQUESTS ---
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
+                        
                         .requestMatchers("/api/auth/**", "/", "/health").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -45,7 +48,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // --- 3. ADD THIS ENTIRE NEW BEAN ---
+    // --- 4. THE CORS CONFIGURATION BEAN ---
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -69,5 +72,4 @@ public class SecurityConfig {
         
         return source;
     }
-    // --- END OF NEW BEAN ---
 }
