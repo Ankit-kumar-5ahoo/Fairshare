@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Data
+@Table(name = "balances")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -14,14 +16,18 @@ public class Balance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    private Group group;
-
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "from_user_id")
     private User fromUser;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "to_user_id")
     private User toUser;
 
-    private Double amount;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "group_id")
+    private Group group;
+
+    @Column(nullable = false)
+    private double amount;
 }

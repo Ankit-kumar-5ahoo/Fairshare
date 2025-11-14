@@ -1,12 +1,14 @@
 package com.fairshare.fairshare.Model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "group_members",
         uniqueConstraints = @UniqueConstraint(columnNames = {"group_id", "user_id"}))
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -18,6 +20,7 @@ public class GroupMember {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "group_id")
+    @JsonBackReference
     private Group group;
 
     @ManyToOne(optional = false)
@@ -27,5 +30,5 @@ public class GroupMember {
     public GroupMember(Group group, User user) {
         this.group = group;
         this.user = user;
-    } //:todo changed by ankit-k-s
+    }
 }

@@ -1,11 +1,20 @@
 package com.fairshare.fairshare.Model;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+
 public class User {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -14,12 +23,17 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    public User() {}
-    public User(String name, String email) { this.name = name; this.email = email; }
+    @Column(nullable = false)
+    private String password;
 
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    @Column(nullable = false)
+    private String role = "ROLE_USER";
+
+    public User(String name, String email) {
+        this.name = name;
+        this.email = email;
+        this.password = "default";
+        this.role = "ROLE_USER";
+    }
+
 }
