@@ -2,11 +2,12 @@ package com.fairshare.fairshare.Model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "expenses")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -16,16 +17,21 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String description;
 
-    private Double amount;
+    @Column(nullable = false)
+    private double amount;
 
-    @ManyToOne
-    @JoinColumn(name = "group_id", nullable = false)
-    @JsonIgnore
-    private Group group;
 
-    @ManyToOne
-    @JoinColumn(name = "paid_by", nullable = false)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "paid_by")
+    @JsonBackReference(value = "user-expenses")
     private User paidBy;
+
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "group_id")
+    @JsonBackReference(value = "group-expenses")
+    private Group group;
 }

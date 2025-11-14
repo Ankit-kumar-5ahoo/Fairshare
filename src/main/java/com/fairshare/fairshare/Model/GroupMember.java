@@ -1,8 +1,8 @@
 package com.fairshare.fairshare.Model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "group_members")
@@ -17,11 +17,9 @@ public class GroupMember {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "group_id", nullable = false)
-    @JsonIgnore
+    @JsonBackReference
     private Group group;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 }
