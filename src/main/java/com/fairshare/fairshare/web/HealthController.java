@@ -7,8 +7,13 @@ import java.util.Map;
 @RestController
 public class HealthController {
 
-    @GetMapping("/healthz")
-    public Map<String, Object> health() {
-        return Map.of("status", "OK");
+    @GetMapping("/")
+    public String home() {
+        return " FairShare backend is live ";
+    }
+
+    @GetMapping("/health")
+    public String health() {
+        return "OK";
     }
 }

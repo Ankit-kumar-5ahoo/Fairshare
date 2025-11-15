@@ -1,30 +1,44 @@
 package com.fairshare.fairshare.web;
 
-import com.fairshare.fairshare.domain.User;
+import com.fairshare.fairshare.Model.User;
 import com.fairshare.fairshare.repo.UserRepository;
+import com.fairshare.fairshare.service.UserService;
 import com.fairshare.fairshare.web.dto.CreateUserRequest;
-import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class UserController {
-    private final UserRepository userRepo;
-    public UserController(UserRepository userRepo){ this.userRepo = userRepo; }
 
-    @PostMapping
-    public ResponseEntity<User> create(@RequestBody @Valid CreateUserRequest req){
-        if (userRepo.existsByEmail(req.getEmail())) {
-            return ResponseEntity.badRequest().build();
-        }
-        User saved = userRepo.save(new User(req.getName(), req.getEmail()));
-        return ResponseEntity.created(URI.create("/api/users/" + saved.getId())).body(saved);
+    private final UserRepository userRepo;
+    private final UserService userService;
+
+    @PostMapping("/register")
+    public ResponseEntity<User> register(@RequestBody @Valid CreateUserRequest req) {
+
+        User saved = userService.register(req.getName(), req.getEmail(), req.getPassword());
+
+        return ResponseEntity
+                .created(URI.create("/api/users/" + saved.getId()))
+                .body(saved);
     }
 
-    @GetMapping
-    public List<User> all(){ return userRepo.findAll(); }
+    @GetMapping("/me")
+    public ResponseEntity<User> getMe(@AuthenticationPrincipal UserDetails principal) {
+
+        User user = userRepo.findByEmail(principal.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(user);
+    }
 }
