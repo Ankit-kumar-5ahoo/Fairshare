@@ -6,7 +6,7 @@ import com.fairshare.fairshare.Model.GroupMember;
 import com.fairshare.fairshare.Model.User;
 import com.fairshare.fairshare.repo.BalanceRepository;
 import com.fairshare.fairshare.repo.GroupMemberRepository;
-import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional; // This is for 'update'
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +19,7 @@ public class BalanceService {
     private final BalanceRepository balanceRepository;
     private final GroupMemberRepository groupMemberRepository;
 
-    @Transactional
+    @Transactional // This is 'jakarta.transaction.Transactional'
     public void updateBalancesAfterExpense(Group group, User payer, double totalAmount) {
         List<GroupMember> members = groupMemberRepository.findByGroup(group);
         int totalMembers = members.size();
@@ -31,6 +31,9 @@ public class BalanceService {
             if (current.getId().equals(payer.getId())) continue;
 
             Optional<Balance> direct = balanceRepository.findByGroupAndFromUserAndToUser(group, current, payer);
+
+            // --- THIS IS THE FIXED LINE ---
+            // It now correctly uses 'balanceRepository'
             Optional<Balance> reverse = balanceRepository.findByGroupAndFromUserAndToUser(group, payer, current);
 
             if (direct.isPresent()) {
@@ -66,6 +69,8 @@ public class BalanceService {
     }
 
 
+    // We use the fully qualified name to avoid import conflicts
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<String> simplifyDebts(Group group) {
         List<Balance> balances = balanceRepository.findByGroup(group);
         Map<User, Double> netBalance = new HashMap<>();

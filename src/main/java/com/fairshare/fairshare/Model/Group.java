@@ -3,7 +3,7 @@ package com.fairshare.fairshare.Model;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.ArrayList;
+
 import java.util.List;
 
 @Entity
@@ -25,23 +25,24 @@ public class Group {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String inviteCode;
 
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @Builder.Default
-    @JsonManagedReference
-    private List<GroupMember> members = new ArrayList<>();
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("group-members")
+    private List<GroupMember> members;
+
 
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Expense> expenses = new ArrayList<>();
+    @JsonManagedReference("group-expenses")
+    private List<Expense> expenses;
+
 
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Balance> balances = new ArrayList<>();
+    @JsonManagedReference("group-balances")
+    private List<Balance> balances;
 
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<TransactionLog> logs = new ArrayList<>();
+    @JsonManagedReference("group-logs")
+    private List<TransactionLog> logs;
 }

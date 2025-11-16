@@ -3,6 +3,7 @@ package com.fairshare.fairshare.web;
 import com.fairshare.fairshare.Model.Group;
 import com.fairshare.fairshare.Model.GroupMember;
 import com.fairshare.fairshare.Model.User;
+import com.fairshare.fairshare.Model.UserDTO;
 import com.fairshare.fairshare.repo.UserRepository;
 import com.fairshare.fairshare.service.GroupService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,14 @@ public class GroupController {
     private final GroupService groupService;
     private final UserRepository userRepository;
 
+    @GetMapping("/{groupId}")
+    public ResponseEntity<Group> getGroupById(@PathVariable Long groupId) {
+        Group group = groupService.getGroupById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found with id: " + groupId));
+        return ResponseEntity.ok(group);
+    }
+
+
     @PostMapping("/create")
     public ResponseEntity<Group> createGroup(
             @RequestParam String name,
@@ -37,10 +46,24 @@ public class GroupController {
     }
 
     @GetMapping("/{groupId}/members")
-    public ResponseEntity<List<GroupMember>> getGroupMembers(@PathVariable Long groupId) {
-        List<GroupMember> members = groupService.getGroupMembers(groupId);
+    public ResponseEntity<List<UserDTO>> getGroupMembers(@PathVariable Long groupId) {
+        List<UserDTO> members = groupService.getGroupMembers(groupId);
         return ResponseEntity.ok(members);
     }
+
+    @PostMapping("/{groupId}/add-member/{userId}")
+    public ResponseEntity<Void> addMember(
+            @PathVariable Long groupId,
+            @PathVariable Long userId,
+            @AuthenticationPrincipal UserDetails principal) {
+
+        User actor = userRepository.findByEmail(principal.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        groupService.addMemberToGroup(groupId, userId, actor);
+        return ResponseEntity.ok().build();
+    }
+
 
     @PutMapping("/{groupId}/rename")
     public ResponseEntity<Group> renameGroup(
@@ -69,6 +92,7 @@ public class GroupController {
 
     @GetMapping("/my-groups")
     public ResponseEntity<List<Group>> getUserGroups(@AuthenticationPrincipal UserDetails principal) {
+
         User user = userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 

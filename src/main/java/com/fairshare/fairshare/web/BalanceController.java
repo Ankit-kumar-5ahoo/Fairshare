@@ -2,6 +2,8 @@ package com.fairshare.fairshare.web;
 
 import com.fairshare.fairshare.Model.Balance;
 import com.fairshare.fairshare.Model.Group;
+import com.fairshare.fairshare.Model.BalanceDTO;
+import java.util.stream.Collectors;
 import com.fairshare.fairshare.repo.BalanceRepository;
 import com.fairshare.fairshare.repo.GroupRepository;
 import com.fairshare.fairshare.service.BalanceService;
@@ -12,7 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/balances")
+// --- THIS IS THE FIXED LINE ---
+@RequestMapping("/api/balance")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class BalanceController {
@@ -22,10 +25,22 @@ public class BalanceController {
     private final GroupRepository groupRepository;
 
     @GetMapping("/group/{groupId}")
-    public ResponseEntity<List<Balance>> getGroupBalances(@PathVariable Long groupId) {
+    public ResponseEntity<List<BalanceDTO>> getGroupBalances(@PathVariable Long groupId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
-        return ResponseEntity.ok(balanceRepository.findByGroup(group));
+
+        List<Balance> balances = balanceRepository.findByGroup(group);
+
+
+        List<BalanceDTO> balanceDTOs = balances.stream().map(balance -> {
+            BalanceDTO dto = new BalanceDTO();
+            dto.setFromUser(balance.getFromUser().getName());
+            dto.setToUser(balance.getToUser().getName());
+            dto.setAmount(balance.getAmount());
+            return dto;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(balanceDTOs);
     }
 
     @GetMapping("/simplify/{groupId}")

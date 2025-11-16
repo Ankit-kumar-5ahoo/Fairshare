@@ -5,10 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "group_members",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"group_id", "user_id"}))
-@Getter
-@Setter
+@Table(name = "group_members")
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -18,17 +16,10 @@ public class GroupMember {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "group_id")
-    @JsonBackReference
+    @ManyToOne
+    @JsonBackReference("group-members")
     private Group group;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "user_id")
+    @ManyToOne
     private User user;
-
-    public GroupMember(Group group, User user) {
-        this.group = group;
-        this.user = user;
-    }
 }

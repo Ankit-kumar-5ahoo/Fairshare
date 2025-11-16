@@ -2,6 +2,7 @@ package com.fairshare.fairshare.web;
 
 import com.fairshare.fairshare.Model.Expense;
 import com.fairshare.fairshare.Model.User;
+import com.fairshare.fairshare.Model.ExpenseDTO;
 import com.fairshare.fairshare.repo.UserRepository;
 import com.fairshare.fairshare.service.ExpenseService;
 import com.fairshare.fairshare.web.dto.CreateExpenseRequest;
@@ -24,26 +25,27 @@ public class ExpenseController {
     private final UserRepository userRepository;
 
     @PostMapping
-    public ResponseEntity<Expense> createExpense(@RequestBody @Valid CreateExpenseRequest req,
-                                                 @AuthenticationPrincipal UserDetails principal) {
+    public ResponseEntity<ExpenseDTO> createExpense(@RequestBody @Valid CreateExpenseRequest req,
+                                                    @AuthenticationPrincipal UserDetails principal) {
 
         User actor = userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Expense saved = expenseService.addExpense(req);
-        return ResponseEntity.ok(saved);
+        ExpenseDTO savedDTO = expenseService.addExpense(req);
+        return ResponseEntity.ok(savedDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Expense> updateExpense(@PathVariable Long id,
-                                                 @RequestBody @Valid CreateExpenseRequest updatedExpense,
-                                                 @AuthenticationPrincipal UserDetails principal) {
+    public ResponseEntity<ExpenseDTO> updateExpense(@PathVariable Long id,
+                                                    @RequestBody @Valid CreateExpenseRequest updatedExpense,
+                                                    @AuthenticationPrincipal UserDetails principal) {
 
         userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Expense saved = expenseService.updateExpense(id, updatedExpense);
-        return ResponseEntity.ok(saved);
+
+        ExpenseDTO savedDTO = expenseService.updateExpense(id, updatedExpense);
+        return ResponseEntity.ok(savedDTO);
     }
 
     @DeleteMapping("/{id}")
@@ -52,13 +54,13 @@ public class ExpenseController {
 
         userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         expenseService.deleteExpense(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/group/{groupId}")
-    public ResponseEntity<List<Expense>> getExpensesByGroup(@PathVariable Long groupId) {
+    public ResponseEntity<List<ExpenseDTO>> getExpensesByGroup(@PathVariable Long groupId) {
+
         return ResponseEntity.ok(expenseService.getExpensesByGroup(groupId));
     }
 }

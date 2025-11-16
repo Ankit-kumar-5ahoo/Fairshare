@@ -2,6 +2,11 @@ package com.fairshare.fairshare.service;
 
 import com.fairshare.fairshare.Model.ChecklistItem;
 import com.fairshare.fairshare.Model.User;
+import com.fairshare.fairshare.Model.ChecklistItemDTO;
+import java.util.stream.Collectors;
+
+import java.time.LocalDateTime;
+
 import com.fairshare.fairshare.repo.ChecklistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,39 +20,57 @@ public class ChecklistService {
 
     private final ChecklistRepository checklistRepository;
 
-    public List<ChecklistItem> getUserChecklist(User user) {
-        return checklistRepository.findByUser(user);
+    private ChecklistItemDTO convertToDTO(ChecklistItem item) {
+        ChecklistItemDTO dto = new ChecklistItemDTO();
+        dto.setId(item.getId());
+        dto.setDescription(item.getDescription());
+        dto.setCompleted(item.isCompleted());
+        return dto;
     }
 
+    public List<ChecklistItemDTO> getUserChecklist(User user) {
+        return checklistRepository.findByUser(user)
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+
     @Transactional
-    public ChecklistItem addItem(User user, String description) {
+    public ChecklistItemDTO addItem(User user, String description) {
         ChecklistItem item = ChecklistItem.builder()
                 .description(description)
                 .user(user)
+                .completed(false)
+                .createdAt(LocalDateTime.now())
                 .build();
-        return checklistRepository.save(item);
+        ChecklistItem saved = checklistRepository.save(item);
+        return convertToDTO(saved);
     }
 
+
     @Transactional
-    public ChecklistItem toggleCompleted(Long itemId, User user) {
+    public ChecklistItemDTO toggleCompleted(Long itemId, User user) {
         ChecklistItem item = checklistRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Item not found"));
         if (!item.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Unauthorized access");
         }
         item.setCompleted(!item.isCompleted());
-        return checklistRepository.save(item);
+        ChecklistItem saved = checklistRepository.save(item);
+        return convertToDTO(saved);
     }
 
     @Transactional
-    public ChecklistItem updateItem(Long itemId, String newDescription, User user) {
+    public ChecklistItemDTO updateItem(Long itemId, String newDescription, User user) {
         ChecklistItem item = checklistRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Item not found"));
         if (!item.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Unauthorized access");
         }
         item.setDescription(newDescription);
-        return checklistRepository.save(item);
+        ChecklistItem saved = checklistRepository.save(item);
+        return convertToDTO(saved);
     }
 
     @Transactional
