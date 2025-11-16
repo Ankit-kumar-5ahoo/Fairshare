@@ -1,45 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-// import api from '../api'; // For later
-
-// --- MOCK DATA (matches API docs) ---
-// GET /api/balance/{groupId}/simplify
-const mockSettlements = [
-  "Rahul pays 175 to Ankit",
-  "Sana pays 90 to Rahul"
-];
-// ------------------------------------
+import api from '../api'; 
 
 const SettleUpModal = ({ onClose, groupId }) => {
   const [settlements, setSettlements] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // --- REAL API CALL (for later) ---
-    // const fetchSettlements = async () => {
-    //   try {
-    //     const res = await api.get(`/balance/${groupId}/simplify`);
-    //     setSettlements(res.data);
-    //   } catch (err) {
-    //     console.error("Failed to fetch settlements", err);
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
-    // fetchSettlements();
-
-    // --- MOCK DATA CALL (for now) ---
-    setTimeout(() => {
-      setSettlements(mockSettlements);
-      setLoading(false);
-    }, 500); // 500ms delay
+    const fetchSettlements = async () => {
+      try {
+        
+        const res = await api.get(`/balance/simplify/${groupId}`);
+        
+        setSettlements(res.data);
+      } catch (err) {
+        console.error("Failed to fetch settlements", err);
+        alert("Failed to load settlements. There might be a server error.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettlements();
   }, [groupId]);
 
   return (
     <Modal onClose={onClose}>
       <h2>Settle Up</h2>
       <p>Here are the simplified settlements for your group:</p>
-
+      
       {loading ? (
         <div>Loading settlements...</div>
       ) : (
@@ -53,6 +41,9 @@ const SettleUpModal = ({ onClose, groupId }) => {
               {item}
             </li>
           ))}
+          {settlements.length === 0 && !loading && (
+            <li className="list-item">Everyone is settled up!</li>
+          )}
         </ul>
       )}
 

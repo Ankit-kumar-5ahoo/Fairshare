@@ -1,75 +1,64 @@
 import React, { useState, useEffect } from 'react';
-// import api from '../api';
-
-// --- MOCK DATA ---
-const mockChecklist = [
-  { id: 1, title: "Pay rent", note: "Before 5th", isCompleted: false },
-  { id: 2, title: "Buy groceries", note: "Milk, eggs, bread", isCompleted: true },
-  { id: 3, title: "Book flight tickets", note: "For Goa trip", isCompleted: false },
-];
-// -----------------
+import api from '../api'; 
 
 const ChecklistPage = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  
+  const [description, setDescription] = useState("");
 
-  // State for the new item form
-  const [title, setTitle] = useState("");
-  const [note, setNote] = useState("");
-
-  useEffect(() => {
-    // --- REAL API CALL (for later) ---
-    // const fetchItems = async () => {
-    //   const res = await api.get('/checklist/my');
-    //   setItems(res.data);
-    //   setLoading(false);
-    // };
-    // fetchItems();
-
-    // --- MOCK LOGIC (for now) ---
-    setTimeout(() => {
-      setItems(mockChecklist);
+  
+  const fetchItems = async () => {
+    try {
+      const res = await api.get('/checklist'); 
+      setItems(res.data);
+    } catch (err) {
+      console.error("Failed to fetch checklist", err);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
+  };
+
+  
+  useEffect(() => {
+    fetchItems();
   }, []);
 
-  const handleAddItem = (e) => {
+  
+  const handleAddItem = async (e) => {
     e.preventDefault();
-    // --- REAL API CALL (for later) ---
-    // await api.post('/checklist', { title, note });
-    // (Then refetch items)
-
-    // --- MOCK LOGIC (for now) ---
-    console.log("Adding item:", { title, note });
-    alert("Mock: Item added!");
-    setTitle("");
-    setNote("");
+    try {
+      
+      const res = await api.post('/checklist', { description }); 
+      setItems([...items, res.data]);
+      setDescription(""); 
+    } catch (err) {
+      console.error("Failed to add item", err);
+      alert("Failed to add item."); 
+    }
   };
 
-  const handleToggleItem = (id) => {
-    // --- REAL API CALL (for later) ---
-    // await api.put(`/checklist/${id}/toggle`);
-    // (Then refetch items)
-
-    // --- MOCK LOGIC (for now) ---
-    console.log("Toggling item:", id);
-    // This just fakes the toggle on the frontend
-    setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, isCompleted: !item.isCompleted } : item
-      )
-    );
+  
+  const handleToggleItem = async (id) => {
+    try {
+      const res = await api.put(`/checklist/${id}/toggle`);
+      setItems(items.map(item => (item.id === id ? res.data : item)));
+    } catch (err) {
+      console.error("Failed to toggle item", err);
+    }
   };
 
-  const handleDeleteItem = (id) => {
+  
+  const handleDeleteItem = async (id) => {
     if (window.confirm("Delete this item?")) {
-      // --- REAL API CALL (for later) ---
-      // await api.delete(`/checklist/${id}`);
-      // (Then refetch items)
-
-      // --- MOCK LOGIC (for now) ---
-      console.log("Deleting item:", id);
-      alert("Mock: Item deleted!");
+      try {
+        await api.delete(`/checklist/${id}`);
+        setItems(items.filter(item => item.id !== id));
+      } catch (err) {
+        console.error("Failed to delete item", err);
+        alert("Failed to delete item.");
+      }
     }
   };
 
@@ -78,29 +67,18 @@ const ChecklistPage = () => {
       <h2>My Personal Checklist</h2>
       <p>This list is private and not shared with any group.</p>
 
-      {/* --- Add Item Form --- */}
       <div className="card" style={{ marginBottom: '20px' }}>
         <h3>Add New Item</h3>
         <form onSubmit={handleAddItem}>
           <div className="form-group">
-            <label htmlFor="title">Title:</label>
+            <label htmlFor="description">Description:</label>
             <input
               type="text"
-              id="title"
+              id="description"
               className="form-input"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="note">Note (Optional):</label>
-            <input
-              type="text"
-              id="note"
-              className="form-input"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
             />
           </div>
           <button type="submit" className="btn" style={{ width: 'auto' }}>
@@ -109,7 +87,6 @@ const ChecklistPage = () => {
         </form>
       </div>
 
-      {/* --- Checklist --- */}
       <div className="card">
         <h3>Your Items</h3>
         {loading ? (
@@ -124,15 +101,12 @@ const ChecklistPage = () => {
                   display: 'flex', 
                   justifyContent: 'space-between', 
                   alignItems: 'center',
-                  // Apply a style if completed
-                  textDecoration: item.isCompleted ? 'line-through' : 'none',
-                  opacity: item.isCompleted ? 0.6 : 1
+                  textDecoration: item.completed ? 'line-through' : 'none',
+                  opacity: item.completed ? 0.6 : 1
                 }}
               >
                 <div>
-                  <strong>{item.title}</strong>
-                  <br />
-                  <small>{item.note}</small>
+                  <strong>{item.description}</strong>
                 </div>
                 <div>
                   <button 
@@ -140,7 +114,7 @@ const ChecklistPage = () => {
                     style={{ width: 'auto', background: '#28a745', marginRight: '5px' }}
                     onClick={() => handleToggleItem(item.id)}
                   >
-                    {item.isCompleted ? 'Undo' : '✓ Done'}
+                    {item.completed ? 'Undo' : '✓ Done'}
                   </button>
                   <button 
                     className="btn btn-logout" 
@@ -152,6 +126,9 @@ const ChecklistPage = () => {
                 </div>
               </li>
             ))}
+            {items.length === 0 && !loading && (
+              <li className="list-item">Your checklist is empty.</li>
+            )}
           </ul>
         )}
       </div>

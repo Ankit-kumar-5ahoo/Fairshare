@@ -1,29 +1,15 @@
 import React, { useState, useEffect } from 'react';
-// 1. Make sure 'Link' is imported
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import AddExpenseModal from '../components/AddExpenseModal';
 import EditExpenseModal from '../components/EditExpenseModal';
 import SettleUpModal from '../components/SettleUpModal';
-// import api from '../api'; 
-
-// --- MOCK DATA (matches API docs) ---
-const mockExpenses = [
-  { id: 55, description: "Lunch", amount: 750, paidBy: { id: 1, name: "Ankit" } },
-  { id: 56, description: "Taxi", amount: 300, paidBy: { id: 2, name: "Rahul" } },
-  { id: 57, description: "Snacks", amount: 120, paidBy: { id: 1, name: "Ankit" } },
-];
-
-const mockMembers = [
-  { id: 1, name: "Ankit" },
-  { id: 2, name: "Rahul" },
-  { id: 3, name: "Sana" },
-];
-// ------------------------------------
+import api from '../api';
 
 const GroupPage = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
 
+  const [group, setGroup] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,51 +17,82 @@ const GroupPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
+
   
-  const groupName = "Goa Trip"; // Mock group name
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [groupRes, membersRes, expensesRes] = await Promise.all([
+        api.get(`/groups/${groupId}`),
+        api.get(`/groups/${groupId}/members`),
+        api.get(`/expenses/group/${groupId}`)
+      ]);
+      
+      setGroup(groupRes.data);
+      setMembers(membersRes.data);
+      setExpenses(expensesRes.data);
 
-  useEffect(() => {
-    // Simulating data fetch
-    setTimeout(() => {
-      setExpenses(mockExpenses);
-      setMembers(mockMembers);
+    } catch (error) {
+      console.error("Failed to fetch group data", error);
+      alert("Failed to load group data. You may not be a member of this group.");
+      navigate('/'); 
+    } finally {
       setLoading(false);
-    }, 500); 
-  }, [groupId]);
-
-  // --- Handler Functions ---
-
-  const handleAddExpense = async (expenseData) => {
-    // (Logic for later)
-    console.log("New expense data:", expenseData);
-    setIsAddModalOpen(false);
+    }
   };
 
+  
+  useEffect(() => {
+    fetchData();
+    
+  }, [groupId, navigate]);
+
+  const handleAddExpense = async (expenseData) => {
+    try {
+      const dataToSend = { ...expenseData, groupId: parseInt(groupId) };
+      await api.post('/expenses', dataToSend);
+      setIsAddModalOpen(false);
+      fetchData(); 
+    } catch (error) {
+      console.error("Failed to add expense", error);
+      alert("Failed to add expense.");
+    }
+  };
+
+  
   const handleEditExpense = async (expenseId, updatedData) => {
-    // (Logic for later)
-    console.log("Updating expense:", expenseId, updatedData);
-    setEditingExpense(null);
+    try {
+      
+      const dataToSend = { ...updatedData, groupId: parseInt(groupId) };
+      
+      await api.put(`/expenses/${expenseId}`, dataToSend);
+      setEditingExpense(null);
+      fetchData(); 
+    } catch (error) {
+      console.error("Failed to update expense", error);
+      alert("Failed to update expense.");
+    }
   };
   
   const handleDeleteExpense = async (expenseId) => {
     if (window.confirm("Are you sure you want to delete this expense?")) {
-      // (Logic for later)
-      console.log("Deleting expense:", expenseId);
+      try {
+        await api.delete(`/expenses/${expenseId}`);
+        fetchData(); 
+      } catch (error) {
+        console.error("Failed to delete expense", error);
+        alert("Failed to delete expense.");
+      }
     }
   };
-
-  // --- Loading State ---
 
   if (loading) {
     return <div className="container">Loading group details...</div>;
   }
 
-  // --- Render JSX ---
-
   return (
     <div className="container">
       
-      {/* --- Modals (Rendered with full props) --- */}
       {isAddModalOpen && (
         <AddExpenseModal
           members={members}
@@ -100,15 +117,13 @@ const GroupPage = () => {
         />
       )}
 
-      {/* --- Header --- */}
       <div className="dashboard-header">
         <div>
           <button onClick={() => navigate('/')} className="btn" style={{width: 'auto', background: '#6c757d'}}>
             &larr; Back to Dashboard
           </button>
-          <h2 style={{ marginTop: '15px' }}>{groupName}</h2>
+          <h2 style={{ marginTop: '15px' }}>{group?.name || 'Group'}</h2>
         </div>
-        {/* --- This is the new Settings Button --- */}
         <div>
           <Link 
             to={`/group/${groupId}/settings`} 
@@ -120,7 +135,6 @@ const GroupPage = () => {
         </div>
       </div>
       
-      {/* --- Action Buttons --- */}
       <div style={{ margin: '20px 0' }}>
         <button 
           className="btn" 
@@ -138,10 +152,7 @@ const GroupPage = () => {
         </button>
       </div>
 
-      {/* --- Main Content Grid --- */}
       <div className="dashboard-grid">
-        
-        {/* Expense List Card */}
         <div className="card">
           <h3>Expenses</h3>
           <ul>
@@ -150,7 +161,7 @@ const GroupPage = () => {
                 <div>
                   <strong>{expense.description}</strong> - ₹{expense.amount}
                   <br />
-                  <small>Paid by {expense.paidBy.name}</small>
+                  <small>Paid by {expense.paidBy?.name || '...'}</small>
                 </div>
                 <div>
                   <button 
@@ -168,10 +179,12 @@ const GroupPage = () => {
                 </div>
               </li>
             ))}
+            {expenses.length === 0 && (
+              <li className="list-item">No expenses added yet.</li>
+            )}
           </ul>
         </div>
 
-        {/* Member List Card */}
         <div className="card">
           <h3>Members</h3>
           <ul>
@@ -182,10 +195,8 @@ const GroupPage = () => {
             ))}
           </ul>
         </div>
-
-      </div> {/* End of dashboard-grid */}
-    </div> // End of container
+      </div>
+    </div>
   );
-};
-
+}; 
 export default GroupPage;

@@ -1,40 +1,28 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 
-// 'expenseToEdit' is the object with {id, description, amount, paidBy}
-// 'members' is the full list of members for the dropdown
 const EditExpenseModal = ({ expenseToEdit, members, onClose, onEditExpense }) => {
-
-  // 1. Pre-fill the form state with the existing expense data
   const [description, setDescription] = useState(expenseToEdit.description);
   const [amount, setAmount] = useState(expenseToEdit.amount);
   const [paidBy, setPaidBy] = useState(expenseToEdit.paidBy.id);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // --- REAL API CALL (for later) ---
-    // const updatedExpenseData = {
-    //   description,
-    //   amount: parseFloat(amount),
-    //   paidBy: parseInt(paidBy),
-    // };
-    // onEditExpense(expenseToEdit.id, updatedExpenseData);
-
-    // --- MOCK LOGIC (for now) ---
-    console.log('Editing expense:', expenseToEdit.id, {
+    
+   
+    const updatedExpenseData = {
       description,
-      amount,
-      paidBy,
-    });
-    onClose(); // Just close the modal on submit
+      amount: parseFloat(amount),
+      paidBy: parseInt(paidBy),
+    };
+    
+    onEditExpense(expenseToEdit.id, updatedExpenseData);
   };
 
   return (
     <Modal onClose={onClose}>
       <h2>Edit Expense</h2>
       <form onSubmit={handleSubmit}>
-
         <div className="form-group">
           <label htmlFor="description">Description:</label>
           <input
@@ -46,7 +34,6 @@ const EditExpenseModal = ({ expenseToEdit, members, onClose, onEditExpense }) =>
             required
           />
         </div>
-
         <div className="form-group">
           <label htmlFor="amount">Amount (₹):</label>
           <input
@@ -60,7 +47,6 @@ const EditExpenseModal = ({ expenseToEdit, members, onClose, onEditExpense }) =>
             step="0.01"
           />
         </div>
-
         <div className="form-group">
           <label htmlFor="paidBy">Paid by:</label>
           <select
@@ -76,7 +62,6 @@ const EditExpenseModal = ({ expenseToEdit, members, onClose, onEditExpense }) =>
             ))}
           </select>
         </div>
-
         <button type="submit" className="btn" style={{ marginTop: '10px' }}>
           Save Changes
         </button>

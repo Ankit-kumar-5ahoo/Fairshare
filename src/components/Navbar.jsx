@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-// We'll add the CSS for this in the next step
+
 const Navbar = () => {
   const { logout } = useAuth();
 

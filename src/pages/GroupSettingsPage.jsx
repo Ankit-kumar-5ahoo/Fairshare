@@ -1,69 +1,93 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// import api from '../api';
+import api from '../api'; 
 
 const GroupSettingsPage = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
-
-  // State for the rename form
-  const [groupName, setGroupName] = useState("Goa Trip (Current Name)"); // Mock current name
-
-  // State for the add member form
+  
+  
+  const [groupName, setGroupName] = useState(""); 
+  
+  
   const [memberEmail, setMemberEmail] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const handleRename = (e) => {
+  
+  useEffect(() => {
+    const fetchGroup = async () => {
+      try {
+        const res = await api.get(`/groups/${groupId}`);
+        setGroupName(res.data.name);
+      } catch (err) {
+        console.error("Failed to fetch group", err);
+        alert("Failed to load group. You may not be a member.");
+        navigate('/');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGroup();
+  }, [groupId, navigate]);
+
+  const handleRename = async (e) => {
     e.preventDefault();
-    // --- REAL API CALL (for later) ---
-    // await api.put(`/groups/${groupId}/rename`, { name: groupName });
-    // alert("Group renamed!");
-
-    // --- MOCK LOGIC (for now) ---
-    console.log("Renaming group to:", groupName);
-    alert("Mock: Group renamed!");
+    try {
+      const params = new URLSearchParams();
+      params.append('newName', groupName);
+      
+      await api.put(`/groups/${groupId}/rename?${params.toString()}`);
+      alert("Group renamed successfully!");
+    } catch (err) {
+      console.error("Failed to rename group", err);
+      alert("Failed to rename group. Only the group creator can do this.");
+    }
   };
 
-  const handleAddMember = (e) => {
+  const handleAddMember = async (e) => {
     e.preventDefault();
-    // --- REAL API CALL (for later) ---
-    // This is tricky. We need to get userId from email first.
-    // const userList = await api.get('/users');
-    // const user = userList.data.find(u => u.email === memberEmail);
-    // if (user) {
-    //   await api.post(`/groups/${groupId}/add-member/${user.id}`);
-    //   alert("Member added!");
-    //   setMemberEmail("");
-    // } else {
-    //   alert("User not found!");
-    // }
+    try {
+      
+      
+      const userListRes = await api.get('/users');
+      
+      
+      const userToAdd = userListRes.data.find(user => user.email === memberEmail);
 
-    // --- MOCK LOGIC (for now) ---
-    console.log("Adding member:", memberEmail);
-    alert("Mock: Member added!");
-    setMemberEmail("");
+      if (!userToAdd) {
+        alert("Error: User with that email not found in the database.");
+        return;
+      }
+
+      
+      await api.post(`/groups/${groupId}/add-member/${userToAdd.id}`);
+      alert("Member added successfully!");
+      setMemberEmail(""); 
+    } catch (err) {
+      console.error("Failed to add member", err);
+      alert("Failed to add member. They might already be in the group.");
+    }
   };
 
   const handleDeleteGroup = async () => {
-    // This is a destructive action, so we use two confirmations
+    
     if (window.confirm("Are you SURE you want to delete this group? This action cannot be undone.")) {
       if (window.confirm("Second confirmation: This will delete all associated expenses. Proceed?")) {
-
-        // --- REAL API CALL (for later) ---
-        // try {
-        //   await api.delete(`/groups/${groupId}`);
-        //   alert("Group deleted.");
-        //   navigate('/'); // Redirect to dashboard
-        // } catch (err) {
-        //   alert("Failed to delete group.");
-        // }
-
-        // --- MOCK LOGIC (for now) ---
-        console.log("Deleting group:", groupId);
-        alert("Mock: Group deleted!");
-        navigate('/'); // Redirect to dashboard
+        try {
+          await api.delete(`/groups/${groupId}`);
+          alert("Group deleted.");
+          navigate('/');
+        } catch (err) {
+          console.error("Failed to delete group", err);
+          alert("Failed to delete group. Only the group creator can do this.");
+        }
       }
     }
   };
+
+  if (loading) {
+    return <div className="container">Loading settings...</div>;
+  }
 
   return (
     <div className="container">
@@ -71,9 +95,9 @@ const GroupSettingsPage = () => {
         &larr; Back to Group
       </button>
 
-      <h2>Group Settings for Group {groupId}</h2>
+      <h2>Group Settings for {groupName}</h2>
 
-      {/* --- RENAME FORM --- */}
+      {}
       <div className="card" style={{ marginTop: '20px' }}>
         <h3>Rename Group</h3>
         <form onSubmit={handleRename}>
@@ -94,7 +118,7 @@ const GroupSettingsPage = () => {
         </form>
       </div>
 
-      {/* --- ADD MEMBER FORM --- */}
+      {}
       <div className="card" style={{ marginTop: '20px' }}>
         <h3>Add Member</h3>
         <form onSubmit={handleAddMember}>
@@ -116,12 +140,12 @@ const GroupSettingsPage = () => {
         </form>
       </div>
 
-      {/* --- DELETE GROUP SECTION --- */}
+      {}
       <div className="card" style={{ marginTop: '20px', borderColor: '#dc3545' }}>
         <h3 style={{ color: '#dc3545' }}>Danger Zone</h3>
         <p>Deleting a group is permanent. It will remove the group and all associated expenses for all members.</p>
         <button 
-          className="btn btn-logout" // Re-using the red logout button style
+          className="btn btn-logout" 
           style={{ width: 'auto' }}
           onClick={handleDeleteGroup}
         >

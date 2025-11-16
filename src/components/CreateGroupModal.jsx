@@ -1,40 +1,37 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 
-const CreateGroupModal = ({ onClose, onCreateGroup }) => {
 
+const CreateGroupModal = ({ onClose, onCreateGroup }) => {
   const [name, setName] = useState('');
-  const [memberEmails, setMemberEmails] = useState(''); // We'll use a single text area
+  const [memberEmails, setMemberEmails] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Split the emails by comma or newline and trim whitespace
+    
+    
     const emailsArray = memberEmails
-      .split(/[\n,]+/) // Split by newline or comma
-      .map(email => email.trim()) // Remove whitespace
-      .filter(email => email.length > 0); // Remove empty strings
+      .split(/[\n,]+/) 
+      .map(email => email.trim())
+      .filter(email => email.length > 0);
 
-    // --- REAL API CALL (for later) ---
-    // const groupData = {
-    //   name,
-    //   memberEmails: emailsArray,
-    // };
-    // onCreateGroup(groupData);
-
-    // --- MOCK LOGIC (for now) ---
-    console.log('Creating group:', {
+    
+    const groupData = {
       name,
-      emailsArray,
-    });
-    onClose(); // Just close the modal on submit
+      memberEmails: emailsArray,
+    };
+    
+    
+    onCreateGroup(groupData);
+    
+   
   };
 
   return (
     <Modal onClose={onClose}>
       <h2>Create New Group</h2>
       <form onSubmit={handleSubmit}>
-
+        
         <div className="form-group">
           <label htmlFor="name">Group Name:</label>
           <input
@@ -57,7 +54,7 @@ const CreateGroupModal = ({ onClose, onCreateGroup }) => {
             rows="4"
             placeholder="Enter emails, separated by commas or new lines"
           />
-          <small>You are automatically added to the group.</small>
+          <small>Your own email is automatically added on the backend.</small>
         </div>
 
         <button type="submit" className="btn" style={{ marginTop: '10px' }}>

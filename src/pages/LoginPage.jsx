@@ -6,16 +6,16 @@ const LoginPage = () => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // const [error, setError] = useState('');
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // setError('');
+
     try {
       await login(email, password);
     } catch (err) {
       console.error(err);
-      // setError('Failed to log in');
+
     }
   };
 
